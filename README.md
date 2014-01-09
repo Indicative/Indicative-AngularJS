@@ -3,6 +3,9 @@ Indicative-AngularJS
 
 Easy-to-use Indicative event builder and REST API for your Angular app.  Just follow the following steps to get started.  
 
+Integration
+-----------
+
 Inject the module into your app like so:
 
 	angular.module(‘myApp’, [‘indicative’]);
@@ -29,3 +32,8 @@ Now, you can start building events. In every Controller, Factory, Service… tha
 
 
 The event, addProperty, and uniqueID methods return the factory instantiated by the injection.  This way, we store everything needed to build an event object.  The done method arranges all the given data via this call and sends it in the correct form to our services.
+
+
+Testing
+-------
+Included in the src files is IndicativeProvider.spec.js.  This just tests to make sure iEventBuilder is working and sending the correctly formed JSON object over to the Indicative provider.  Add this to your karma runner, but don't only use this for your own testing!  Add more to make sure you are forming the correct events! 
