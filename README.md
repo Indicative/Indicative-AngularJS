@@ -1,20 +1,42 @@
 Indicative-AngularJS
 ====================
 
-Easy-to-use Indicative event builder and REST API for your Angular app.  Just follow the following steps to get started.  
+Easy-to-use Indicative event builder and API wrapper for your Angular app.  Just follow the following steps to get started.  
+
+This library will give you a provider that wraps the Indicative Javascript sdk and an easy to use Indicative event builder. 
 
 Integration
 -----------
 
-Inject the module into your app like so:
+Setup the Indicative JS client by adding the following to your Header (more information [here](http://support.indicative.com/main-documentation/#post-205)):
+```html
+    <script type="text/javascript">
+      (function(apiKey) {
+        var ind = document.createElement('script');
+        ind.src = '//cdn.indicative.com/js/Indicative.min.js';
+        ind.type = 'text/javascript';
+        ind.async = 'true';
+        var ind_init = false;
+        ind.onload = ind.onreadystatechange = function() {
+          var rs = this.readyState;
+          if (ind_init || (rs && rs != 'complete' && rs != 'loaded')) return;
+
+          ind_init = true;
+          Indicative.initialize(apiKey);
+        };
+
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ind, s);
+      })("YOUR-API-KEY");
+    </script>
+```
+
+
+
+Inject Indicative into your angular app by adding it to your app module:
 
 	angular.module(‘myApp’, [‘indicative’]);
 
-In your config method, be sure to set your Indicative API key to the Indicative provider:
-
-	.config(['IndicativeProvider', function (IndicativeProvider) {
-		IndicativeProvider.setApiKey("Your-API-Key-Goes-Here");
-	}])
 
 
 Now, you can start building events. In every Controller, Factory, Service… that you want to log a stat, be sure to inject iEventBuilder. Then, all you need is one line of code!  See the following example:
@@ -31,9 +53,22 @@ Now, you can start building events. In every Controller, Factory, Service… tha
 	}])
 
 
-The event, addProperty, and uniqueID methods return the factory instantiated by the injection.  This way, we store everything needed to build an event object.  The done method arranges all the given data via this call and sends it in the correct form to our services.
+The `iEventBuilder` factory gives you the following methods:
+
+| Method Name   | Parameters                    | Returns              | Functionality                                                                                                                                                                                                                                                                                                                                                                           |
+|---------------|-------------------------------|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| event         | String: Event Name            | iEventBuilder object | sets the event name (mandatory)                                                                                                                                                                                                                                                                                                                                                         |
+| uniqueID      | String: UniqueID              | iEventBuilder object | sets the unique id for this specific event, we recommend using the Indicative object to add this globally.                                                                                                                                                                                                                                                                              |
+| addProperty   | String: Key, String: Value    | iEventBuilder object | adds a property to this specific event                                                                                                                                                                                                                                                                                                                                                  |
+| addProperties | Object: {String, String}      | iEventBuilder object | adds multiple properties to this specific event                                                                                                                                                                                                                                                                                                                                         |
+| done          | Function: Callback (optional) | no return object     | builds and sends the Indicative event.  This uses the event, uniqueID, and properties specified (if specified).  It will also use the global properties and uniqueID (if one isn't set here) set using the Indicative js client.  After sending up the event, it will clear the semi-stateful event name, uniqueID, and properties for the next event to be built up using the builder. |
 
 
-Testing
--------
-Included in the src files is IndicativeProvider.spec.js.  This just tests to make sure iEventBuilder is working and sending the correctly formed JSON object over to the Indicative provider.  Add this to your karma runner, but don't only use this for your own testing!  Add more to make sure you are forming the correct events! 
+You can also use methods discussed in the Javascript SDK by injecting `Indicative` into your services.  
+
+Using the Javascript SDK, once a user logs into your app, set their uniqueID and common properties to be used with all future events:
+```javascript
+Indicative.setUniqueID("YOUR-USER'S-UNIQUE-ID"); //this could also be an email
+Indicative.addProperties({"age": 26, "state": "premium"});
+```
+

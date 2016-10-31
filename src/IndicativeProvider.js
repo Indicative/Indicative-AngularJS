@@ -1,70 +1,67 @@
-angular.module('indicative', [])
+(function(angular) {
+  "use strict";
 
-    .provider('Indicative', function(){
-        var iURL = "http://api.indicative.com/service/event";
+  angular.module('indicative', [])
+    .provider('Indicative', IndicativeProvider)
+    .factory('iEventBuilder', ['Indicative', iEventBuilder]);
 
-        this.apiKey = "";
-        this.setApiKey = function(newAPI) {
-            this.apiKey = newAPI;
-        };
+  function IndicativeProvider() {
+    this.$get = getter;
 
-        this.$get = function($http) {
-            var _this = this;
+    function getter() {
+      return window.Indicative;
+    }
+  }
 
-            var service = {
-                getAPIKey: function() {
-                    return _this.apiKey;
-                },
+  function iEventBuilder(Indicative) {
+    var _this = this;
 
-                addEvent: function(obj) {
-                    obj.apiKey = _this.apiKey;
-                    return $http.post(iURL, obj, {});
-                }
-            };
+    this.eventName = undefined;
+    this.eventUniqueId = undefined;
+    this.properties = {};
 
-            return service;
-        };
-    })
+    return {
+      event: function(name) {
+        _this.eventName = name;
+        return this;
+      },
+      uniqueID: function (uniqueID) {
+        _this.eventUniqueId = uniqueID;
+        return this;
+      },
+      addProperty: function (name, value) {
+        if(name && (value || value === false)) {
+          _this.properties[name] = value;
+        }
+        return this;
+      },
+      addProperties: function (obj) {
+        for(var key in obj) {
+          this.addProperty(key, obj[key]);
+        }
+        return this;
+      },
+      done: function(callback) {
+        callback = callback || function() {};
+        var sendEvent = angular.copy(_this);
+        if (sendEvent.eventUniqueId) {
+          Indicative.buildEvent(sendEvent.eventName,
+                                sendEvent.eventUniqueId,
+                                sendEvent.properties,
+                                callback);
+        } else {
+          Indicative.buildEvent(sendEvent.eventName,
+                                sendEvent.properties,
+                                callback);
+        }
 
-    .factory('iEventBuilder', ['Indicative', function(Indicative){
-        this.eventName = undefined;
-        this.eventUniqueId = undefined;
-        this.properties = {};
-        var _this = this;
-        return {
-            event: function(name) {
-                _this.eventName = name;
-                return this;
-            },
-            uniqueID: function (uniqueID) {
-                _this.eventUniqueId = uniqueID;
-                return this;
-            },
-            addProperty: function (name, value) {
-                if(name && value) {
-                    _this.properties[name] = value;
-                }
-                return this;
-            },
-            addCommonProps: function (obj) {
-                for(var key in obj) {
-                    _this.properties[key] = obj[key];
-                }
-            },
-            done: function() {
-                var sending = angular.copy(_this);
-                var r_obj = {};
-                r_obj.eventName = sending.eventName;
-                r_obj.eventUniqueId = sending.eventUniqueId;
-                r_obj.properties = sending.properties;
 
-                //clear this object for future stats
-                _this.eventName = undefined;
-                _this.eventUniqueId = undefined;
-                _this.properties = {};
+        //clear this object for future stats
+        _this.eventName = undefined;
+        _this.eventUniqueId = undefined;
+        _this.properties = {};
+      }
+    };
+  }
+})(angular);
 
-                return Indicative.addEvent(r_obj);
-            }
-        };
-    }])
-;
